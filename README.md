@@ -8,10 +8,9 @@ app_port: 8501
 tags:
 - streamlit
 pinned: false
-short_description: An English Dialects Classifier based on Acoustic Features
+short_description: Predicting English Dialect Using Speech Brain and Streamlit
 license: apache-2.0
 ---
-
 # Welcome to Streamlit!
 
 Edit `/src/streamlit_app.py` to customize this app to your heart's desire. :heart:
