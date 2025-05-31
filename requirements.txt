@@ -1,0 +1,13 @@
+yt_dlp==2025.5.22
+speechbrain==1.0.3
+torch==2.7.0+cpu     
+torchaudio==2.7.0+cpu
+requests==2.32.3
+ipywidgets==8.1.5
+IPython==7.34.0
+ffmpeg-python==0.2.0
+validators==0.35.0
+streamlit==1.45.1
+plotly==6.1.2        
+pandas==2.2.3        
+numpy==2.2.6

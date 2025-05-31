@@ -1,0 +1,80 @@
+============================================================
+🎵 Extracting and preparing audio...
+[⏱️] Audio extraction took 11.33 seconds.
+✅ Audio prepared in 11.56s | Duration: 1.8 minutes
+🧠 Loading model...
+✅ Model loaded in 1.63s
+
+============================================================
+📊 CHUNK SIZE ANALYSIS RESULTS
+============================================================
+
+🧩 Testing 10-second chunks...
+CategoricalEncoder.expect_len was never called: assuming category count of 16 to be correct! Sanity check your encoder using `.expect_len`. Ensure that downstream code also uses the correct size. If you are sure this does not apply to you, use `.ignore_len`.
+  📦 Chunks created: 11
+  ⏱️  Chunking time: 0.001s
+  🧠 Prediction time: 23.477s       
+  🔄 Total processing: 23.478s      
+  ⚡ Processing rate: 0.5 chunks/sec 
+  📈 Avg confidence: 0.666
+  🎯 Most common: indian (5 times)  
+  📊 Confidence range: 0.592 - 0.797
+
+🧩 Testing 15-second chunks...       
+  📦 Chunks created: 8
+  ⏱️  Chunking time: 0.000s
+  🧠 Prediction time: 25.102s
+  🔄 Total processing: 25.102s
+  ⚡ Processing rate: 0.3 chunks/sec
+  📈 Avg confidence: 0.681
+  🎯 Most common: england (4 times)
+  📊 Confidence range: 0.602 - 0.849
+
+🧩 Testing 20-second chunks...
+  📦 Chunks created: 6
+  ⏱️  Chunking time: 0.000s
+  🧠 Prediction time: 26.239s
+  🔄 Total processing: 26.239s
+  ⚡ Processing rate: 0.2 chunks/sec
+  📈 Avg confidence: 0.671
+  🎯 Most common: england (4 times)
+  📊 Confidence range: 0.603 - 0.733
+
+🧩 Testing 30-second chunks...
+  📦 Chunks created: 4
+  ⏱️  Chunking time: 0.000s
+  🧠 Prediction time: 28.015s
+  🔄 Total processing: 28.015s
+  ⚡ Processing rate: 0.1 chunks/sec
+  📈 Avg confidence: 0.659
+  🎯 Most common: england (2 times)
+  📊 Confidence range: 0.559 - 0.714
+
+🧩 Testing 60-second chunks...
+  📦 Chunks created: 2
+  ⏱️  Chunking time: 0.000s
+  🧠 Prediction time: 25.356s
+  🔄 Total processing: 25.356s
+  ⚡ Processing rate: 0.1 chunks/sec
+  📈 Avg confidence: 0.714
+  🎯 Most common: indian (2 times)
+  📊 Confidence range: 0.667 - 0.760
+
+================================================================================
+📈 PERFORMANCE COMPARISON SUMMARY
+================================================================================
+Size   Chunks   Total Time   Rate         Avg Conf   Consistency  Winner
+--------------------------------------------------------------------------------
+10     11       23.478       0.5          0.666      0.90         indian
+15     8        25.102       0.3          0.681      0.88         england
+20     6        26.239       0.2          0.671      0.93         england
+30     4        28.015       0.1          0.659      0.89         england
+60     2        25.356       0.1          0.714      0.91         indian
+
+============================================================
+🏆 RECOMMENDATIONS
+============================================================
+⚡ Fastest processing: 10s chunks (23.48s total)
+🎯 Highest accuracy: 60s chunks (0.714 avg confidence)
+📊 Most consistent: 20s chunks (0.926 consistency)
+⚖️  Best balance: 60s chunks (score: 42.8)
