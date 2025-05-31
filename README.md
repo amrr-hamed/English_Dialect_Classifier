@@ -1,4 +1,5 @@
 ---
+<<<<<<< HEAD
 title: AI Accent Analyzer
 emoji: 🎤
 colorFrom: blue
@@ -29,3 +30,4 @@ Analyze accents from YouTube videos using advanced AI models with confidence-bas
 4. View detailed results and visualizations
 
 Built with Streamlit, SpeechBrain, and Plotly.
+
