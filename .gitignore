@@ -106,3 +106,6 @@ env/
 # Misc
 *.bak
 *.swp
+
+chunk_time.py
+analyze.txt
