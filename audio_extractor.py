@@ -179,32 +179,12 @@ class RobustAudioExtractor:
                 shutil.rmtree(temp_dir, ignore_errors=True)
             raise Exception(f"Failed to download direct media: {str(e)}")
 
-    def _extract_from_loom(self, url, start_time):
-        """Extract audio from Loom with multiple strategies"""
-        strategies = [
-            self._loom_strategy_basic,
-            self._loom_strategy_embed,
-            self._loom_strategy_api,
-        ]
-        
-        for i, strategy in enumerate(strategies):
-            try:
-                print(f"Trying Loom strategy {i+1}...")
-                result = strategy(url, start_time)
-                if result:
-                    return result
-                time.sleep(1)  # Brief delay between strategies
-            except Exception as e:
-                print(f"Loom strategy {i+1} failed: {str(e)}")
-                continue
-        
-        raise Exception("Failed to extract audio from Loom URL with all strategies")
 
-    def _loom_strategy_basic(self, url, start_time):
-        """Basic Loom extraction using yt-dlp"""
+    def extract_audio_from_loom(url):
+        """Simple Loom audio extractor using yt-dlp"""
         temp_dir = tempfile.mkdtemp()
         ydl_opts = {
-            'format': 'bestaudio[abr<=128]/best[height<=720]',
+            'format': 'bestaudio/best',
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'wav',
@@ -214,33 +194,16 @@ class RobustAudioExtractor:
             'quiet': True,
             'no_warnings': True,
             'noplaylist': True,
-            'http_headers': {
-                'User-Agent': random.choice(self.user_agents)
-            }
         }
 
-        with suppress_stdout_stderr():
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([url])
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
 
-        return self._find_audio_file(temp_dir, start_time)
+        for f in os.listdir(temp_dir):
+            if f.endswith('.wav'):
+                return os.path.join(temp_dir, f)
 
-    def _loom_strategy_embed(self, url, start_time):
-        """Try Loom embed URL format"""
-        # Extract video ID from Loom URL
-        import re
-        loom_id_match = re.search(r'loom\.com/share/([a-zA-Z0-9]+)', url)
-        if loom_id_match:
-            video_id = loom_id_match.group(1)
-            embed_url = f"https://www.loom.com/embed/{video_id}"
-            return self._loom_strategy_basic(embed_url, start_time)
-        return None
-
-    def _loom_strategy_api(self, url, start_time):
-        """Try to get direct video URL from Loom"""
-        # This is a placeholder for a more sophisticated approach
-        # You might need to inspect Loom's network requests to find direct video URLs
-        return None
+        raise Exception("Audio file not found in output.")
 
     def _extract_with_ytdlp_robust(self, url, start_time):
         """Robust yt-dlp extraction with multiple strategies"""
