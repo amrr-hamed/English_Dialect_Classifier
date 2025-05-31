@@ -26,41 +26,63 @@ PyTorch
 
 A tool to identify English accents from audio/video sources with optimized processing for large files.
 
-🚀 Features
-Supports local files, direct media URLs, and Loom videos
+# 🎤 English Accent Analyzer  
+A **Streamlit-based** tool powered by **PyTorch** to identify English accents from audio and video sources.
 
-Automatically splits large files into 1-minute chunks
+---
 
-Early stopping for faster analysis
+## 🚀 Key Features  
+- 🎧 Upload local audio/video files or provide media URLs (e.g., Loom links)  
+- 📦 Automatic splitting of large files into 1-minute chunks  
+- ⚡ Early stopping for efficient analysis  
+- 📊 Confidence-based predictions  
+- 🖥️ Intuitive interactive Streamlit dashboard  
 
-Confidence-based predictions
+---
 
-Interactive Streamlit dashboard
+## ⚙️ Installation  
 
-⚙️ Installation
-Clone the repository:
+1. **Clone the repository:**
+```bash
+git clone https://github.com/amrr-hamed/English_Dialect_Classifier.git
+cd English_Dialect_Classifier
+```
 
-bash
-git clone https://github.com/your-username/accent-analyzer.git
-cd accent-analyzer
-Install dependencies:
-
-bash
+2. **Install required Python packages:**
+```bash
 pip install -r requirements.txt
-Install FFmpeg (required for audio processing):
+```
 
-bash
-# On Ubuntu/Debian
+3. **Install FFmpeg (needed for audio processing):**
+
+- **Ubuntu/Debian:**
+```bash
 sudo apt install ffmpeg
+```
 
-# On macOS
+- **macOS (using Homebrew):**
+```bash
 brew install ffmpeg
-🖥️ Usage
-Run the Streamlit app:
+```
 
-bash
+---
+
+## 🖥️ How to Use  
+
+1. **Run the Streamlit app:**
+```bash
 streamlit run app.py
-The app will open in your browser at http://localhost:8501
+```
+
+2. **Access the app in your browser** at:  
+[http://localhost:8501](http://localhost:8501)
+
+3. **Inside the app:**
+   - Upload an audio/video file **OR** paste a media URL  
+   - Click **Analyze**  
+   - View predicted dialects with confidence scores  
+   - Use interactive UI controls to explore results
+
 
 📥 Input Options
 1. Upload a file
