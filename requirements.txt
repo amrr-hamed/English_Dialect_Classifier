@@ -1,7 +1,7 @@
 yt_dlp==2025.5.22
 speechbrain==1.0.3
-torch==2.7.0+cpu     
-torchaudio==2.7.0+cpu
+torch==2.7.0     
+torchaudio==2.7.0
 requests==2.32.3
 ipywidgets==8.1.5
 IPython==7.34.0
