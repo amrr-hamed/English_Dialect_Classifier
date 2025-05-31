@@ -2,12 +2,10 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import time
 import os
 from pathlib import Path
 import tempfile
-import shutil
 
 # Import your existing modules
 try:
@@ -19,7 +17,7 @@ except ImportError as e:
 
 # Page configuration
 st.set_page_config(
-    page_title="🎤 Accent Analyzer",
+    page_title="🎤 English Accent Analyzer",
     page_icon="🎤",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -34,12 +32,6 @@ st.markdown("""
         font-size: 3rem;
         font-weight: bold;
         margin-bottom: 2rem;
-    }
-    .metric-container {
-        background-color: #f0f2f6;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin: 0.5rem 0;
     }
     .success-box {
         background-color: #d4edda;
@@ -74,8 +66,6 @@ def initialize_session_state():
         st.session_state.analysis_results = None
     if 'processing' not in st.session_state:
         st.session_state.processing = False
-    if 'uploaded_file_path' not in st.session_state:
-        st.session_state.uploaded_file_path = None
 
 def save_uploaded_file(uploaded_file):
     """Save uploaded file to temporary directory"""
@@ -90,31 +80,31 @@ def save_uploaded_file(uploaded_file):
         return None
 
 def create_confidence_chart(chunk_results):
-    """Create confidence score chart for chunks"""
+    """Create confidence score chart for 1-minute chunks"""
     if not chunk_results:
         return None
     
     chunk_data = []
-    for result in chunk_results:
+    for i, result in enumerate(chunk_results):
         chunk_data.append({
-            'Chunk': result['chunk'],
+            'Minute': f"Min {i+1}",
             'Confidence': result['confidence'],
             'Accent': result['accent'],
-            'Is Confident': '✓ Confident' if result['is_confident'] else '✗ Low Confidence'
+            'Is Confident': '✓ High Confidence' if result['is_confident'] else '✗ Low Confidence'
         })
     
     df = pd.DataFrame(chunk_data)
     
     fig = px.bar(df, 
-                 x='Chunk', 
+                 x='Minute', 
                  y='Confidence', 
                  color='Is Confident',
                  hover_data=['Accent'],
-                 title='Confidence Scores by Chunk',
-                 color_discrete_map={'✓ Confident': '#28a745', '✗ Low Confidence': '#dc3545'})
+                 title='Confidence Scores by Minute',
+                 color_discrete_map={'✓ High Confidence': '#28a745', '✗ Low Confidence': '#dc3545'})
     
     fig.update_layout(
-        xaxis_title="Chunk Number",
+        xaxis_title="Time Segment",
         yaxis_title="Confidence Score",
         showlegend=True,
         height=400
@@ -156,30 +146,30 @@ def display_results(results):
     
     with col1:
         st.metric(
-            label="🎯 Confidence Score",
-            value=f"{results['confidence_score']:.3f}",
-            delta=f"{results['confidence_percentage']}"
+            label="🎯 Overall Confidence",
+            value=f"{results['confidence_score']:.1%}",
+            help="Overall confidence in the prediction"
         )
     
     with col2:
         st.metric(
-            label="📊 Chunks Processed",
-            value=f"{results['processed_chunks_count']}/{results['available_chunks_count']}",
-            delta="Early stopped" if results.get('early_stopped', False) else "Complete"
+            label="📊 Minutes Analyzed",
+            value=f"{results['processed_chunks_count']} min",
+            delta=f"of {results.get('duration_minutes', 0):.1f} min total"
         )
     
     with col3:
         st.metric(
-            label="✅ Confident Predictions",
+            label="✅ High Confidence Segments",
             value=results['confident_chunks_count'],
-            delta=f"{(results['confident_chunks_count']/results['processed_chunks_count']*100):.1f}%"
+            delta=f"{(results['confident_chunks_count']/results['processed_chunks_count']*100):.0f}%" if results['processed_chunks_count'] > 0 else "0%"
         )
     
     with col4:
         st.metric(
             label="⏱️ Processing Time",
             value=f"{results['processing_time']:.1f}s",
-            delta=f"{results.get('duration_minutes', 0):.1f}min video"
+            help="Time taken to analyze the audio"
         )
     
     # Detailed Analysis
@@ -198,49 +188,45 @@ def display_results(results):
     with chart_col2:
         confident_chart = create_accent_distribution_chart(
             results['confident_accent_counts'], 
-            "Confident Predictions Distribution"
+            "High Confidence Predictions"
         )
         if confident_chart:
             st.plotly_chart(confident_chart, use_container_width=True)
     
-    # All predictions distribution
-    if results['all_accent_counts'] != results['confident_accent_counts']:
-        st.subheader("📊 All Predictions (Including Low Confidence)")
-        all_chart = create_accent_distribution_chart(
-            results['all_accent_counts'], 
-            "All Predictions Distribution"
-        )
-        if all_chart:
-            st.plotly_chart(all_chart, use_container_width=True)
-    
-    # Detailed chunk results table
-    with st.expander("🔍 View Detailed Chunk Results"):
-        chunk_df = pd.DataFrame(results['chunk_results'])
-        st.dataframe(chunk_df, use_container_width=True)
+    # Detailed results table
+    with st.expander("🔍 View Minute-by-Minute Results"):
+        if results['chunk_results']:
+            chunk_df = pd.DataFrame(results['chunk_results'])
+            chunk_df.index = [f"Minute {i+1}" for i in range(len(chunk_df))]
+            st.dataframe(chunk_df, use_container_width=True)
     
     # Summary statistics
     with st.expander("📋 Summary Statistics"):
         col1, col2 = st.columns(2)
         
         with col1:
-            st.write("**Confident Predictions:**")
-            for accent, count in results['confident_accent_counts'].items():
-                percentage = (count / results['confident_chunks_count']) * 100
-                st.write(f"• {accent}: {count} chunks ({percentage:.1f}%)")
+            st.write("**High Confidence Predictions:**")
+            if results['confident_accent_counts']:
+                for accent, count in results['confident_accent_counts'].items():
+                    percentage = (count / results['confident_chunks_count']) * 100
+                    st.write(f"• {accent}: {count} segments ({percentage:.1f}%)")
+            else:
+                st.write("No high confidence predictions")
         
         with col2:
             st.write("**All Predictions:**")
-            for accent, count in results['all_accent_counts'].items():
-                percentage = (count / results['processed_chunks_count']) * 100
-                st.write(f"• {accent}: {count} chunks ({percentage:.1f}%)")
+            if results['all_accent_counts']:
+                for accent, count in results['all_accent_counts'].items():
+                    percentage = (count / results['processed_chunks_count']) * 100
+                    st.write(f"• {accent}: {count} segments ({percentage:.1f}%)")
 
 def main():
     """Main Streamlit application"""
     initialize_session_state()
     
     # Header
-    st.markdown('<h1 class="main-header">🎤 Accent Analyzer</h1>', unsafe_allow_html=True)
-    st.markdown("Analyze accents from video files, URLs, or audio sources using advanced AI models.")
+    st.markdown('<h1 class="main-header">🎤 English Accent Analyzer</h1>', unsafe_allow_html=True)
+    st.markdown("Analyze English accents from video files, Loom videos, or direct media URLs. Audio is processed in 1-minute segments for detailed analysis.")
     
     # Sidebar configuration
     st.sidebar.header("⚙️ Configuration")
@@ -251,13 +237,7 @@ def main():
         max_value=0.9,
         value=0.6,
         step=0.05,
-        help="Only predictions above this threshold are considered confident"
-    )
-    
-    early_stopping = st.sidebar.checkbox(
-        "Enable Early Stopping",
-        value=True,
-        help="Stop processing when 3 consecutive confident predictions agree"
+        help="Only predictions above this threshold are considered high confidence"
     )
     
     # Input section
@@ -265,30 +245,30 @@ def main():
     
     input_method = st.radio(
         "Choose input method:",
-        ["URL (YouTube, Loom, etc.)", "Upload File"],
+        ["URL (Loom or Direct Link)", "Upload File"],
         horizontal=True
     )
     
     source = None
     
-    if input_method == "URL (YouTube, Loom, etc.)":
+    if input_method == "URL (Loom or Direct Link)":
         source = st.text_input(
             "Enter video URL:",
-            placeholder="https://www.youtube.com/watch?v=...",
-            help="Supports YouTube, Loom, and direct media URLs"
+            placeholder="https://www.loom.com/share/...",
+            help="Supports Loom videos and direct media URLs"
         )
         
         # URL examples
         with st.expander("🔗 Supported URL Examples"):
-            st.write("• YouTube: `https://www.youtube.com/watch?v=VIDEO_ID`")
-            st.write("• YouTube Shorts: `https://www.youtube.com/shorts/VIDEO_ID`")
-            st.write("• Loom: `https://www.loom.com/share/VIDEO_ID`")
-            st.write("• Direct media files: `https://example.com/video.mp4`")
+            st.write("• **Loom:** `https://www.loom.com/share/VIDEO_ID`")
+            st.write("• **Direct MP4:** `https://example.com/video.mp4`")
+            st.write("• **Direct audio:** `https://example.com/audio.mp3`")
+            st.markdown('<div class="info-box">📝 <strong>Note:</strong> YouTube URLs are not supported to avoid authentication issues in deployment.</div>', unsafe_allow_html=True)
     
     else:  # Upload File
         uploaded_file = st.file_uploader(
             "Choose a video or audio file",
-            type=['mp4', 'webm', 'avi', 'mov', 'mkv', 'm4v', '3gp', 'mp3', 'wav', 'm4a', 'aac', 'ogg', 'flac'],
+            type=['mp4', 'webm', 'avi', 'mov', 'mkv', 'm4v', 'mp3', 'wav', 'm4a', 'aac', 'ogg', 'flac'],
             help="Upload video or audio files for accent analysis"
         )
         
@@ -296,16 +276,17 @@ def main():
             # Save uploaded file
             with st.spinner("Saving uploaded file..."):
                 source = save_uploaded_file(uploaded_file)
-                st.session_state.uploaded_file_path = source
             
             if source:
                 st.success(f"✅ File uploaded: {uploaded_file.name}")
+                file_size = len(uploaded_file.getbuffer()) / 1024 / 1024
+                st.info(f"📊 File size: {file_size:.1f}MB")
             else:
                 st.error("❌ Failed to save uploaded file")
     
     # Analysis button
     analyze_button = st.button(
-        "🚀 Start Analysis",
+        "🚀 Start Accent Analysis",
         type="primary",
         disabled=not source or st.session_state.processing,
         use_container_width=True
@@ -321,15 +302,15 @@ def main():
         
         try:
             status_text.text("🎵 Extracting audio...")
-            progress_bar.progress(20)
+            progress_bar.progress(25)
             
-            status_text.text("🧠 Loading AI model...")
-            progress_bar.progress(40)
+            status_text.text("🧩 Creating 1-minute segments...")
+            progress_bar.progress(50)
             
-            status_text.text("🔍 Analyzing accent...")
-            progress_bar.progress(60)
+            status_text.text("🧠 Analyzing accent patterns...")
+            progress_bar.progress(75)
             
-            # Run analysis
+            # Run analysis with the confidence threshold
             results = analyze_video_accent(source, confidence_threshold=confidence_threshold)
             
             progress_bar.progress(100)
@@ -353,37 +334,41 @@ def main():
     
     # Display results
     if st.session_state.analysis_results:
-        st.header("📊 Results")
+        st.header("📊 Analysis Results")
         display_results(st.session_state.analysis_results)
     
     # Information section
     with st.expander("ℹ️ About This Tool"):
         st.markdown("""
-        **Accent Analyzer** uses advanced machine learning models to identify accents from speech in videos and audio files.
+        **English Accent Analyzer** uses advanced machine learning models to identify English accents from speech.
         
-        **Features:**
-        - Supports multiple input sources (URLs, file uploads)
-        - Smart chunking for efficient processing
-        - Confidence-based predictions
-        - Early stopping for faster results
-        - Detailed analysis with visualizations
+        **Key Features:**
+        - 🎯 **1-minute segments:** Audio is processed in 1-minute chunks for detailed analysis
+        - 🎤 **Accent detection:** Identifies British, American, Australian, and other English accents
+        - 📊 **Confidence scoring:** Provides reliability scores for each prediction
+        - 🔗 **Multiple sources:** Supports Loom videos, direct URLs, and file uploads
         
         **Supported Formats:**
-        - **Video:** MP4, WebM, AVI, MOV, MKV, M4V, 3GP
+        - **Video:** MP4, WebM, AVI, MOV, MKV, M4V
         - **Audio:** MP3, WAV, M4A, AAC, OGG, FLAC
-        - **URLs:** YouTube, Loom, direct media links
+        - **URLs:** Loom videos, direct media links
         
         **How it works:**
-        1. Audio is extracted from the source
-        2. Audio is chunked into smaller segments
-        3. Each chunk is analyzed for accent features
-        4. Results are aggregated with confidence scoring
-        5. Final prediction is made based on confident predictions
+        1. Audio is extracted from your source
+        2. Audio is split into 1-minute segments
+        3. Each segment is analyzed for accent characteristics
+        4. Results are combined with confidence weighting
+        5. Final accent prediction is provided
+        
+        **Best Results:**
+        - Use clear speech audio
+        - Longer videos provide more accurate results
+        - Multiple speakers may affect accuracy
         """)
     
     # Footer
     st.markdown("---")
-    st.markdown("Made with ❤️ using Streamlit and SpeechBrain")
+    st.markdown("🚀 **Deployment Ready:** Optimized for Hugging Face Spaces deployment")
 
 if __name__ == "__main__":
     main()
